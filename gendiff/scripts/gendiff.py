@@ -1,9 +1,13 @@
 #!/usr/bin/env python3
-from .. import cli
+import json
+from gendiff.cli import parse_args
+from gendiff.diff_builder import generate_diff
 
 
 def main():
-    cli.parse_args()
+    args = parse_args()
+    diff = generate_diff(args.first_file, args.second_file, args.format)
+    print(diff)
     
 
 
