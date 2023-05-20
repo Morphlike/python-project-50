@@ -1,45 +1,64 @@
-from gendiff.scripts.gendiff import generate_diff
-from gendiff.formatters.stylish import get_stylish
-from gendiff.formatters.plain import get_plain
-from gendiff.formatters.json import get_json
+import os
+import pytest
+
+from gendiff.diff_builder import generate_diff
 
 
-def converte(output):
-    if output is None:
-        output = 'null'
-    if output is True:
-        output = 'true'
-    if output is False:
-        output = 'false'
-    return str(output)
+def test_help():
+    assert os.system('gendiff -h') == 0
 
 
-def test_generate_diff_json():
-    result = open('tests/fixtures/result_test.txt', 'r').read()
-    assert generate_diff('tests/fixtures/file1.json', 'tests/fixtures/file2.json', get_stylish) == result
+def test_with_empty_files():
+    assert generate_diff("tests/fixtures/empty.json", "tests/fixtures/empty.json") == '{\n}'
 
 
-def test_converte():
-    result = 'true'
-    assert converte(True) == result
+@pytest.mark.parametrize(
+    "file_1, file_2",
+    [("tests/fixtures/file1_test.json", "tests/fixtures/file2_test.json"),
+     ("tests/fixtures/file1_test.yml", "tests/fixtures/file2_test.yml"),
+     ("tests/fixtures/file1_test.json", "tests/fixtures/file2_test.yml"),
+     ],
+)
+def test_with_actual_flat_files(file_1, file_2):
+    with open('tests/fixtures/result_test.txt', 'r') as file:
+        result = file.read()
+    assert generate_diff(file_1, file_2) == result
 
 
-def test_generate_diff_yml():
-    result = open('tests/fixtures/result_test.txt', 'r').read()
-    assert generate_diff('tests/fixtures/file1.yml', 'tests/fixtures/file2.yml', get_stylish) == result
+@pytest.mark.parametrize(
+    "file_1, file_2",
+    [("tests/fixtures/file1.json", "tests/fixtures/file2.json"),
+     ("tests/fixtures/file1.yml", "tests/fixtures/file2.yml"),
+     ("tests/fixtures/file1.json", "tests/fixtures/file2.yml"),
+     ],
+)
+def test_nested_files_and_stylish_format(file_1, file_2):
+    with open('tests/fixtures/result_nested.txt', 'r') as file:
+        result = file.read()
+    assert generate_diff(file_1, file_2) == result
 
 
-def test_generate_diff_yml_json():
-    result = open('tests/fixtures/result_test.txt', 'r').read()
-    assert generate_diff('tests/fixtures/file1.yml', 'tests/fixtures/file2.json', get_stylish) == result
-    assert generate_diff('tests/fixtures/file1.json', 'tests/fixtures/file2.yml', get_stylish) == result
+@pytest.mark.parametrize(
+    "file_1, file_2, format",
+    [("tests/fixtures/file1.json", "tests/fixtures/file2.json", "plain"),
+     ("tests/fixtures/file1.yml", "tests/fixtures/file2.yml", "plain"),
+     ("tests/fixtures/file1.json", "tests/fixtures/file2.yml", "plain"),
+     ],
+)
+def test_plain_format(file_1, file_2, format):
+    with open('tests/fixtures/result_plain.txt', 'r') as file:
+        result = file.read()
+    assert generate_diff(file_1, file_2, format) == result
 
 
-def test_generate_diff_plain_format():
-    result = open('tests/fixtures/result_plain.txt', 'r').read()
-    assert generate_diff('tests/fixtures/file1.yml', 'tests/fixtures/file2.yml', get_plain) == result
-
-
-def test_generate_diff_json_format():
-    result = open('tests/fixtures/result.json', 'r').read()
-    assert generate_diff('tests/fixtures/file1.json', 'tests/fixtures/file2.yml', get_json) == result
+@pytest.mark.parametrize(
+    "file_1, file_2, format",
+    [("tests/fixtures/file1.json", "tests/fixtures/file2.json", "json"),
+     ("tests/fixtures/file1.yml", "tests/fixtures/file2.yml", "json"),
+     ("tests/fixtures/file1.json", "tests/fixtures/file2.yml", "json"),
+     ],
+)
+def test_json_format(file_1, file_2, format):
+    with open('tests/fixtures/result_json.txt', 'r') as file:
+        result = file.read()
+    assert generate_diff(file_1, file_2, format) == result

@@ -1,26 +1,30 @@
-def get_key_name(key_diff):
-    return key_diff[0]
+def format_value(value):
+    if isinstance(value, bool):
+        formatted = str(value).lower()
+    elif value is None:
+        formatted = 'null'
+    elif isinstance(value, (int, float)):
+        formatted = str(value)
+    elif isinstance(value, dict):
+        formatted = '[complex value]'
+    else:
+        formatted = f"'{value}'"
+    return formatted
 
 
-def get_status(key_diff):
-    return key_diff[1][0]
+def build_line(key, value, sign, depth):
+    indent = ('    ' * depth)
+    lines = []
 
+    if isinstance(value, dict):
+        dict_lines = []
+        for k, v in sorted(value.items()):
+            dict_lines.append(build_line(k, v, ' ', depth + 1))
 
-def get_children(key_diff):
-    return key_diff[1][3]
+        result = itertools.chain("{", dict_lines, [indent + "    }"])
 
-
-def get_value(key_diff):
-    if get_status(key_diff) == 'removed':
-        return key_diff[1][1]
-    return key_diff[1][2]
-
-
-def get_old_value(key_diff):
-    return key_diff[1][1]
-
-
-def is_changed_key(key_diff):
-    if get_status(key_diff) != 'unchanged' or get_children(key_diff):
-        return True
-    return False
+        line = '\n'.join(result)
+        lines.append(f'{indent}  {sign} {key}: {line}')
+    else:
+        lines.append(f'{indent}  {sign} {key}: {format_value(value)}')
+    return '\n'.join(lines)

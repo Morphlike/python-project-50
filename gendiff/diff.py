@@ -1,62 +1,58 @@
 import json
-from yaml import safe_load
+import yaml
+from gendiff.formatters.json import get_json
+from gendiff.formatters.plain import get_plain
+from gendiff.formatters.stylish import get_stylish
 
 
-def get_format(filepath):
+def open_file(filepath):
+    with open(filepath, 'r') as f:
+        return parse_file(f, filepath)
+
+
+def parse_file(data, filepath):
     if filepath.endswith('.json'):
-        format = 'json'
+        return json.load(data)
     elif filepath.endswith('.yaml') or filepath.endswith('.yml'):
-        format = 'yaml'
+        return yaml.safe_load(data)
     else:
-        format = 'other format'
-    return format
-
-
-def parse_json(filepath):
-    with open(filepath, 'r') as filedata:
-        data = json.load(filedata)
-    return data
-
-
-def parse_yaml(filepath):
-    with open(filepath, 'r') as filedata:
-        data = safe_load(filedata)
-    return data
-
-
-def read_file(filepath):
-    format = get_format(filepath)
-
-    if format == 'json':
-        data = parse_json(filepath)
-    elif format == 'yaml':
-        data = parse_yaml(filepath)
-    else:
-        raise Exception('Files should be json or yaml format')
-    return data
+        raise ValueError('Unsupported file format')
 
 
 def get_diff(old_data, new_data):
+    keys = sorted(set(old_data.keys()) | set(new_data.keys()))
+    result = []
+    for key in keys:
+        diff_result = {'key': key}
 
-    def make_key_diff(key):
-        value_old = old_data.get(key, None)
-        value_new = new_data.get(key, None)
-        key_diff = (key, ['unchanged', value_old, value_new, None])
+        if key not in new_data.keys():
+            diff_result['action'] = 'old_key'
+            diff_result['old_value'] = old_data[key]
 
-        if key not in old_data:
-            key_diff[1][0] = 'added'
-        elif key not in new_data:
-            key_diff[1][0] = 'removed'
-        elif isinstance(value_old, dict) and isinstance(value_new, dict):
-            key_diff[1][3] = get_diff(value_old, value_new)
-            key_diff[1][1], key_diff[1][2] = [None, None]
-        elif value_old != value_new:
-            key_diff[1][0] = 'updated'
+        elif key not in old_data.keys():
+            diff_result['action'] = 'new_key'
+            diff_result['new_value'] = new_data[key]
+
+        elif old_data[key] == new_data[key]:
+            diff_result['action'] = 'no_changes'
+            diff_result['old_value'] = old_data[key]
+
+        elif isinstance(old_data[key], dict) and isinstance(new_data[key], dict):
+            diff_result['action'] = 'parent'
+            diff_result['child'] = get_diff(old_data[key], new_data[key])
+
         else:
-            key_diff[1][1] = None
-        return key_diff
+            diff_result['action'] = 'new_value'
+            diff_result['old_value'] = old_data[key]
+            diff_result['new_value'] = new_data[key]
+        result.append(diff_result)
+    return result
 
-    unique_keys = sorted(old_data.keys() | new_data.keys())
-    diff = list(map(make_key_diff, unique_keys))
 
-    return diff
+def make_format(diff, format):
+    if format == 'stylish':
+        return get_stylish(diff)
+    elif format == 'plain':
+        return get_plain(diff)
+    elif format == 'json':
+        return get_json(diff)
