@@ -22,5 +22,5 @@ test:
 test-coverage:
 	poetry run pytest --cov=gendiff --cov-report xml
 
-selfcheck:
+check:
 	poetry check
