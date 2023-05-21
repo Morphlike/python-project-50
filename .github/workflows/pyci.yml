@@ -2,7 +2,6 @@ name: Python CI
 
 on:
   - push
-  - pull_request
 
 jobs:
   build:
@@ -15,16 +14,15 @@ jobs:
         uses: actions/setup-python@v4
       - name: Install dependencies
         run: |
+          python3 -m pip install --upgrade pip
           pip install poetry
           make install
       - name: Run linter and pytest
         run: |
-          make check
+          make lint
       - name: Test & publish code coverage
         uses: paambaati/codeclimate-action@v3.2.0
-        if: github.ref_name == 'main'
         env:
           CC_TEST_REPORTER_ID: ${{ secrets.CC_TEST_REPORTER_ID }}
         with:
           coverageCommand: make test-coverage
-          debug: true
