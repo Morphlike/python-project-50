@@ -1,8 +1,5 @@
 from itertools import chain
-from gendiff.formatters.support_func import (
-build_line,
-format_value,
-)
+from gendiff.formatters.support_func import build_line
 
 
 def get_stylish(items, depth=0):

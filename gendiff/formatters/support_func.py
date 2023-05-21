@@ -1,3 +1,6 @@
+import itertools
+
+
 def format_value(value):
     if isinstance(value, bool):
         formatted = str(value).lower()

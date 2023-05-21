@@ -1,5 +1,6 @@
 from gendiff.formatters.support_func import format_value
 
+
 def get_plain(data):
     result = plain(data)
     return result

@@ -37,7 +37,8 @@ def get_diff(old_data, new_data):
             diff_result['action'] = 'no_changes'
             diff_result['old_value'] = old_data[key]
 
-        elif isinstance(old_data[key], dict) and isinstance(new_data[key], dict):
+        elif isinstance(old_data[key], dict) and \
+        isinstance(new_data[key], dict):
             diff_result['action'] = 'parent'
             diff_result['child'] = get_diff(old_data[key], new_data[key])
 
